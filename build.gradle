@@ -1,0 +1,83 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.2.RELEASE")
+        classpath('com.bmuschko:gradle-docker-plugin:3.0.3')
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+apply plugin: 'jacoco'
+
+jar {
+    baseName = 'coverage-metrics'
+    version =  '1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+project.ext {
+    isDebugMode = System.getProperty("DEBUG", "false") == "true"
+}
+
+configurations {
+    api
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web")
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+    testCompile('com.jayway.jsonpath:json-path')
+    api ('org.jacoco:org.jacoco.agent:0.7.7.201606060606')
+}
+
+//Start section for external jacoco test report
+tasks.withType(JavaCompile) {
+    if (isDebugMode) {
+        options.debug = true
+        options.compilerArgs = ["-g"]
+    }
+}
+
+task copyJacocoAgentToLibs(type: Copy) {
+    if (isDebugMode) {
+        from {
+            configurations.api.collect { zipTree(it) }
+        }
+        into "${project.buildDir}/libs/"
+        include 'jacocoagent.jar'
+    }
+}
+
+jar.dependsOn copyJacocoAgentToLibs
+//End section for external jacoco test report
+
+jacocoTestReport {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+    executionData = fileTree(dir: 'build/jacoco', include: '**/*.exec')
+    reports {
+        xml {
+            enabled true
+            //Following value is a file
+            destination "${buildDir}/reports/jcc/xml/jacoco.xml"
+        }
+        csv.enabled false
+        html {
+            enabled true
+            //Following value is a folder
+            destination "${buildDir}/reports/jcc/html"
+        }
+    }
+    sourceDirectories = files('src/java')
+    classDirectories = files('build/classes/main')
+}
