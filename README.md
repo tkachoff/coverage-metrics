@@ -31,3 +31,4 @@ java -javaagent:build/libs/jacocoagent.jar=destfile=build/jacoco/jacoco.exec,app
 ```bash
 bash gradlew jacocoTestReport
 ```
+###6. See report in build/reports/jcc/html/index.html
