@@ -3,3 +3,4 @@ build
 target
 manifest.yml
 coverage-metrics.iml
+.gradle
